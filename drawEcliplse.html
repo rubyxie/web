@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>画椭圆</title>
+    <style>
+        .title{text-align:center;}
+        .wrapper{margin: 0 auto;width: 500px; margin: 0 auto;border: 1px solid #000000;}
+        .content{position: relative;height: 500px;}
+        .dot{position: absolute;width:1px;height: 1px;overflow: hidden;font-size:0;line-height: 0; background: #333;}
+    </style>
+    </head>
+<body>
+<h1 class="title">画一个椭圆并判断点击是否在椭圆内</h1>
+<div class="wrapper">
+    <div class="content" id="content">
+</div>
+
+
+</div>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+<script>
+    //*********定义加载模块方法  start **************//
+    (function (window, undefined) {
+        if (window.define) {
+            return
+        }
+        function isFunction(obj) {
+            return Object.prototype.toString.call(obj) === "[object Function]"
+        }
+
+        var MM = {};
+        var initModuleName = "initRun";
+
+        function require(name) {
+            if (!MM[name]) {
+                throw new Error("Module " + name + " is not defined.")
+            }
+            var module = MM[name];
+            if (module.inited === false) {
+                runModule(name)
+            }
+            return module.ret
+        }
+
+        function runModule(name) {
+            var exports = {};
+            var module = MM[name];
+            if (isFunction(MM[name].factory)) {
+                var ret = MM[name].factory.apply(undefined, [require, exports, undefined]);
+                module.ret = ret === undefined ? exports : ret
+            } else {
+                module.ret = MM[name].factory
+            }
+            module.inited = true
+        }
+
+        function define(name, deps, factory) {
+            if (MM[name]) {
+                throw new Error("Module " + name + " has been defined already.")
+            }
+            if (isFunction(deps)) {
+                factory = deps
+            }
+            MM[name] = {factory:factory, inited:false};
+            if (name === initModuleName) {
+                runModule(name)
+            }
+        }
+
+        window.define = define
+    })(window);
+    //*********定义加载模块方法 end **************//
+
+    /**
+     * @author ruby
+     * @despretion 画椭圆并判断点击是否在椭圆内
+     * @return
+     */
+    (function(){
+        /**
+         * @dec 可以进行缓存的节点
+         * @type {Object}
+         */
+        var $dom = {
+            content : $('#content')
+        }
+        /**
+         * @despretion定义 画椭圆函数
+         */
+        define('mode/drawEliplse',function(require){
+            var ElipObj ={
+                draw : function(el,a,b){
+                    var dotHtmlArr = [],//储存 画点的  html元素
+                        leftStyle , rightStyle; //左右的样式值
+                    var widthEl = el && el[0].offsetWidth ,
+                        heightEl = el && el[0].offsetHeight;　
+
+                    for(var i = 0; i < 360;i++){
+                        leftStyle = (a*Math.sin(i) + (widthEl-2)/2) + "px";
+                        rightStyle = (b*Math.cos(i) + (heightEl-2)/2) + "px";
+
+                        dotHtmlArr.push('<div class="dot" style="left:' +
+                                leftStyle+';top:'+rightStyle+'"></div>');
+                    }
+
+                    el.html(dotHtmlArr.join(""));
+
+                }
+                ,
+                /**
+                 * @desc 判断点击是否在椭圆内 算法在椭圆内点 左边点带入  后值小于1
+                 * @param a 椭圆长
+                 * @param b 椭圆宽
+                 * @param x 鼠标x坐标
+                 * @param y 鼠标y坐标
+                 * @parm true 在椭圆内 false 不在椭圆内
+                 */
+                prove : function(a,b,x,y){
+                    return Math.pow((x/a),2) + Math.pow((y/b),2) < 1 ? true : false;
+                }
+            }
+            return ElipObj;
+        });
+        /**
+         * @desc需要进行绑定的事件
+         */
+        define('view/bindFun',function(require){
+            var drawMode = require("mode/drawEliplse");
+
+            $dom.content.bind('click',function(e){
+                if (e.pageX || e.pageY) {
+                    var x = e.pageX,
+                        y = e.pageY;
+                } else {
+                    var x = e.clientX + document.body.scrollLeft - document.body.clientLeft,
+                        y = e.clientY + document.body.scrollTop - document.body.clientTop;
+                }
+
+                var offsetX = $(this).offset().left,
+                    offsetY = $(this).offset().top;
+
+                //鼠标所在点位置相对与中心点
+                x = x - offsetX - ($(this)[0].offsetWidth -2)/2;
+                y = y - offsetY - ($(this)[0].offsetHeight -2)/2;
+
+               if( drawMode.prove(100,80,x,y) ){
+                   alert("点击在椭圆内");
+               }
+
+            });
+
+        });
+        /**
+         * @desc 模块启动函数
+         */
+        define('initRun',function(require){
+            var drawMode = require("mode/drawEliplse");
+
+            drawMode.draw($dom.content,100,80);
+            require("view/bindFun");
+
+        })
+
+    })()
+</script>
+</body>
+</html>
